@@ -1,0 +1,46 @@
+%% Hedef Polinom (ts=50, %OS=20)
+
+syms s ;
+syms e1 e2 e3 e4 kp ki kd m n;
+
+ts = 50 ;
+OS = 0.2 ;
+ 
+zeta = -log(OS)/sqrt((pi^2)+(log(OS)^2)) ;
+
+wn = 4/(zeta*ts) ;
+
+pds = (s^2+2*zeta*wn*s+wn^2)*(s+e1)*(s+e2)*(s+e3)*(s+e4) ;
+d1 = coeffs(pds,s,'all') ;
+
+%% Kapalı Çevrim Transfer Fonksiyonu
+
+Gs = tf2sym(theta_elev) ;
+Fs = (kp*s + ki)/s ;
+Ts = (Fs*Gs)/(1+(Fs*Gs)) ;
+
+[n2,d2] = numden(Ts) ;
+n2 = coeffs(n2,s, 'all') ;
+d2 = coeffs(d2,s,'all') ;
+d2 = d2/d2(1,1) ;
+
+problem = d2 == d1 ;
+
+sol = solve(problem,[kp ki e1 e2 e3 e4]) ;
+
+ki = double(sol.ki(1,1)) 
+kp = double(sol.kp(1,1)) 
+e1 = double(sol.e1) ;
+e2 = double(sol.e2) ;
+e3 = double(sol.e3) ;
+e4 = double(sol.e4) ;
+
+Fs_theta_elev = -sym2tf((kp*s + ki)/s) ;
+Gs = zpk(theta_elev) ;
+
+Ts_theta_elev = (Fs_theta_elev*Gs)/(1+(Fs_theta_elev*Gs)) ;
+
+step(Ts_theta_elev)
+stepinfo(Ts_theta_elev)
+zpk(Ts_theta_elev) ;
+
